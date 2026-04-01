@@ -1,0 +1,74 @@
+services:
+  web-display:
+    build:
+      context: ../novnc-display
+      dockerfile: Dockerfile.novnc
+    image: web-display:latest
+    ports:
+      - "6080:6080"
+    volumes:
+      - x11-socket:/tmp/.X11-unix
+    #restart: unless-stopped
+
+  ise:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - ISE_VERSION=${ISE_VERSION}
+      additional_contexts:
+        - installer_dir=${INSTALLER_DIR}
+        - config_dir=${CONFIG_DIR}
+    image: ise:${ISE_VERSION}
+
+  ise-webapp:
+    image: ise:${ISE_VERSION}
+    pid: "service:web-display"
+    environment:
+      - DISPLAY=:0
+      - MALLOC_CHECK_=0
+      - LC_ALL=C
+      - QT_X11_NO_MITSHM=1
+      - XLIB_SKIP_ARGB_VISUALS=1
+    volumes:
+      - x11-socket:/tmp/.X11-unix
+      - ${WORKSPACE}:/home/guest/workspace
+    depends_on:
+      - web-display
+      - ise
+    #command: /bin/bash -c "sleep 5 && source /opt/Xilinx/${ISE_VERSION}/ISE_DS/settings64.sh && ise"
+    command: /bin/bash -c "sleep 5 && source /opt/Xilinx/${ISE_VERSION}/ISE_DS/settings64.sh && ise; kill -15 1"
+
+  ise-linux:
+    image: ise:${ISE_VERSION}
+    environment:
+      - DISPLAY=$DISPLAY
+      - _JAVA_AWT_WM_NONREPARENTING=1
+      - MALLOC_CHECK_=0
+      - LC_ALL=C
+      - QT_X11_NO_MITSHM=1
+      - XLIB_SKIP_ARGB_VISUALS=1
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ${WORKSPACE}:/home/guest/workspace
+    command: /bin/bash -c "source /opt/Xilinx/${ISE_VERSION}/ISE_DS/settings64.sh && ise"
+
+  config-gen:
+    image: ubuntu:14.04
+    volumes:
+      - ${INSTALLER_DIR}:/mnt/installer:ro
+      - ${WORKSPACE}:/workspace
+    stdin_open: true  # Keeps stdin open so you can type the Edition number
+    tty: true         # Allocates a pseudo-TTY window
+    command: >
+      /bin/bash -c "
+      echo 'Installing minimal 32-bit dependencies...' &&
+      dpkg --add-architecture i386 && apt-get update -qq &&
+      apt-get install -y -qq libncurses5 libncurses5:i386 libstdc++5 libx11-6 libsm6 libxi6 libxrandr2 libfontconfig1 libxext6 libxrender1 libstdc++5:i386 lib32stdc++6 libc6-i386 lib32gcc1 libglib2.0-0:i386 libsm6:i386 libx11-6:i386 &&
+      echo 'Dependencies installed! Launching ConfigGen...' &&
+      cd /workspace &&
+      /mnt/installer/xsetup -b ConfigGen
+      "
+
+volumes:
+  x11-socket:

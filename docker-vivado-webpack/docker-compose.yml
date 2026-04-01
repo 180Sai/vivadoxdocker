@@ -1,7 +1,7 @@
 services:
   web-display:
     build:
-      context: .
+      context: ../novnc-display
       dockerfile: Dockerfile.novnc
     image: web-display:latest
     ports:
