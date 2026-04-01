@@ -1,0 +1,49 @@
+services:
+  web-display:
+    build:
+      context: .
+      dockerfile: Dockerfile.novnc
+    image: web-display:latest
+    ports:
+      - "6080:6080"
+    volumes:
+      - x11-socket:/tmp/.X11-unix
+    #restart: unless-stopped
+
+  vivado:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - VIVADO_VERSION=${VIVADO_VERSION}
+      additional_contexts:
+        - installer_dir=${INSTALLER_DIR}
+        - config_dir=${CONFIG_DIR}
+    image: vivado:${VIVADO_VERSION}
+
+  vivado-webapp:
+    image: vivado:${VIVADO_VERSION}
+    pid: "service:web-display"
+    environment:
+      - DISPLAY=:0
+    volumes:
+      - x11-socket:/tmp/.X11-unix
+      - ${WORKSPACE}:/home/guest/workspace
+    depends_on:
+      - web-display
+      - vivado
+    #command: /bin/bash -c "sleep 5 && source /opt/Xilinx/Vivado/${VIVADO_VERSION}/settings64.sh && vivado -log /home/guest/.vivado -jou /home/guest/.vivado"
+    command: /bin/bash -c "sleep 5 && source /opt/Xilinx/Vivado/${VIVADO_VERSION}/settings64.sh && vivado -log /home/guest/.vivado -jou /home/guest/.vivado; kill -15 1"
+
+  vivado-linux:
+    image: vivado:${VIVADO_VERSION}
+    environment:
+      - DISPLAY=$DISPLAY
+      - _JAVA_AWT_WM_NONREPARENTING=1
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ${WORKSPACE}:/home/guest/workspace
+    command: /bin/bash -c "source /opt/Xilinx/Vivado/${VIVADO_VERSION}/settings64.sh && vivado -log /home/guest/.vivado -jou /home/guest/.vivado"
+
+volumes:
+  x11-socket:

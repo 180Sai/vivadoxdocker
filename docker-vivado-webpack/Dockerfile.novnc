@@ -1,0 +1,25 @@
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    xvfb \
+    x11vnc \
+    novnc \
+    websockify \
+    #xfce4 \
+    #xfce4-terminal \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY novnc-entrypoint.sh /novnc-entrypoint.sh
+RUN chmod +x /novnc-entrypoint.sh
+
+EXPOSE 6080
+
+ENV DISPLAY=:0
+ENV RESOLUTION=1600x900
+
+RUN mkdir -p /tmp/.X11-unix && \
+    chmod 1777 /tmp/.X11-unix
+
+CMD ["/novnc-entrypoint.sh"]
