@@ -1,29 +1,4 @@
-include: ../c/docker-compose.yml
-
-# Common Environment variables (Dictionary format for safe merging)
-x-ise-env: &ise-env
-  LD_PRELOAD: /usr/local/lib/flock_shim.so:/usr/local/lib/flock_shim_32.so
-  XILINXD_LICENSE_FILE: /home/guest/.Xilinx/Xilinx.lic
-  MALLOC_CHECK_: 0
-  LC_ALL: C
-  QT_X11_NO_MITSHM: 1
-  XLIB_SKIP_ARGB_VISUALS: 1
-  _JAVA_AWT_WM_NONREPARENTING: 1
-
-x-ise-runtime: &ise-runtime
-  image: ise:${ISE_VERSION}
-
 services:
-  web-display:
-    build:
-      context: ../novnc-display
-      dockerfile: Dockerfile.novnc
-    image: web-display:latest
-    ports:
-      - "6080:6080"
-    volumes:
-      - x11-socket:/tmp/.X11-unix
-
   ise:
     build:
       context: .
@@ -34,39 +9,3 @@ services:
         - installer_dir=${INSTALLER_DIR}
         - config_dir=${CONFIG_DIR}
     image: ise:${ISE_VERSION}
-
-  ise-webapp:
-    <<: *ise-runtime
-    pid: "service:web-display"
-    environment:
-      <<: *ise-env
-      DISPLAY: ":0"
-    volumes:
-      - x11-socket:/tmp/.X11-unix
-      - ${WORKSPACE}:/home/guest/workspace
-      - ${LICENSE_FILE}:/home/guest/.Xilinx/Xilinx.lic:ro
-      - ../c/lib/flock_shim_64.so:/usr/local/lib/flock_shim.so:ro
-      - ../c/lib/flock_shim_32.so:/usr/local/lib/flock_shim_32.so:ro
-    depends_on:
-      - web-display
-      - ise
-      - shim-builder
-    command: /bin/bash -c "sleep 5 && source /opt/Xilinx/${ISE_VERSION}/ISE_DS/settings64.sh && ise; kill -15 1"
-
-  ise-linux:
-    <<: *ise-runtime
-    environment:
-      <<: *ise-env
-      DISPLAY: ${DISPLAY:-:0}
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix
-      - ${WORKSPACE}:/home/guest/workspace
-      - ${LICENSE_FILE}:/home/guest/.Xilinx/Xilinx.lic:ro
-      - ../c/lib/flock_shim_64.so:/usr/local/lib/flock_shim.so:ro
-      - ../c/lib/flock_shim_32.so:/usr/local/lib/flock_shim_32.so:ro
-    depends_on:
-      - shim-builder
-    command: /bin/bash -c "source /opt/Xilinx/${ISE_VERSION}/ISE_DS/settings64.sh && ise"
-
-volumes:
-  x11-socket:

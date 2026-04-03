@@ -1,0 +1,130 @@
+include:
+  - c/docker-compose.yml
+  - novnc-display/docker-compose.yml
+  - dise/docker-compose.yml
+  - dvivado/docker-compose.yml
+
+x-vivado-env: &vivado-env
+  LD_LIBRARY_PATH: /opt/flock_shim/64:/opt/flock_shim/32
+  LD_PRELOAD: flock_shim.so
+  SPOOF_ALL_LOCKS: "1"
+  AUTO_MIGRATE: true
+  AUTO_RESTORE: true
+  DISPLAY: ":0"
+  XAUTHORITY: /home/guest/.Xauthority
+  _JAVA_AWT_WM_NONREPARENTING: 1
+
+x-vivado-runtime: &vivado-runtime
+  image: vivado:${VIVADO_VERSION}
+
+x-ise-env: &ise-env
+  LD_LIBRARY_PATH: /opt/flock_shim/64:/opt/flock_shim/32
+  LD_PRELOAD: flock_shim.so
+  SPOOF_ALL_LOCKS: "1"
+  AUTO_MIGRATE: true
+  AUTO_RESTORE: true
+  DISPLAY: ":0"
+  XAUTHORITY: /home/guest/.Xauthority
+  _JAVA_AWT_WM_NONREPARENTING: 1
+  XILINXD_LICENSE_FILE: /home/guest/.Xilinx/Xilinx.lic
+  MALLOC_CHECK_: 0
+  LC_ALL: C
+  QT_X11_NO_MITSHM: 1
+  XLIB_SKIP_ARGB_VISUALS: 1
+
+x-ise-runtime: &ise-runtime
+  image: ise:${ISE_VERSION}
+
+# ─── Shared Depends ──────────────────────────────────────────────────────────
+
+x-depends-webapp: &depends-webapp
+  - web-display
+  - shim-builder
+
+x-depends-linux: &depends-linux
+  - shim-builder
+
+# ─── Shared Commands ─────────────────────────────────────────────────────────
+
+x-cmd-vivado: &cmd-vivado
+  /bin/bash -c "sleep $${PRE_WAIT_TIME:-0} &&
+    bash /usr/local/bin/migrate.sh --watch &
+    W_PID=$$! &&
+    source /opt/Xilinx/Vivado/${VIVADO_VERSION}/settings64.sh &&
+    vivado -log /home/guest/.vivado -jou /home/guest/.vivado;
+    kill $$W_PID; [ \"$$AUTO_RESTORE\" == \"true\" ] && bash /usr/local/bin/migrate.sh --restore;
+    kill -15 1"
+
+x-cmd-ise: &cmd-ise
+  /bin/bash -c "sleep $${PRE_WAIT_TIME:-0} &&
+    bash /usr/local/bin/migrate.sh --watch &
+    W_PID=$$! &&
+    source /opt/Xilinx/${ISE_VERSION}/ISE_DS/settings64.sh && ise;
+    kill $$W_PID; [ \"$$AUTO_RESTORE\" == \"true\" ] && bash /usr/local/bin/migrate.sh --restore;
+    kill -15 1"
+
+# ─── Services ────────────────────────────────────────────────────────────────
+services:
+  vivado-webapp:
+    container_name: dvivado-web
+    <<: *vivado-runtime
+    pid: "service:web-display"
+    environment:
+      <<: *vivado-env
+      PRE_WAIT_TIME: 5
+    volumes:
+      - x11-socket:/tmp/.X11-unix
+      - ${XAUTHORITY:-${HOME}/.Xauthority}:/home/guest/.Xauthority
+      - ${WORKSPACE}:/home/guest/workspace
+      - ./c/lib:/opt/flock_shim:ro
+      - ./dvivado/migrate.sh:/usr/local/bin/migrate.sh:ro
+    depends_on: *depends-webapp
+    command: *cmd-vivado
+
+  vivado-linux:
+    container_name: dvivado-linux
+    <<: *vivado-runtime
+    environment:
+      <<: *vivado-env
+      DISPLAY: ${DISPLAY:-:0}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ${XAUTHORITY:-${HOME}/.Xauthority}:/home/guest/.Xauthority
+      - ${WORKSPACE}:/home/guest/workspace
+      - ./c/lib:/opt/flock_shim:ro
+      - ./dvivado/migrate.sh:/usr/local/bin/migrate.sh:ro
+    depends_on: *depends-linux
+    command: *cmd-vivado
+
+  ise-webapp:
+    container_name: dise-web
+    <<: *ise-runtime
+    pid: "service:web-display"
+    environment:
+      <<: *ise-env
+      PRE_WAIT_TIME: 5
+    volumes:
+      - x11-socket:/tmp/.X11-unix
+      - ${XAUTHORITY:-${HOME}/.Xauthority}:/home/guest/.Xauthority
+      - ${WORKSPACE}:/home/guest/workspace
+      - ${ISE_LICENSE_FILE:-/dev/null}:/home/guest/.Xilinx/Xilinx.lic:ro
+      - ./c/lib:/opt/flock_shim:ro
+      - ./dise/migrate.sh:/usr/local/bin/migrate.sh:ro
+    depends_on: *depends-webapp
+    command: *cmd-ise
+
+  ise-linux:
+    container_name: dise-linux
+    <<: *ise-runtime
+    environment:
+      <<: *ise-env
+      DISPLAY: ${DISPLAY:-:0}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ${XAUTHORITY:-${HOME}/.Xauthority}:/home/guest/.Xauthority
+      - ${WORKSPACE}:/home/guest/workspace
+      - ${ISE_LICENSE_FILE:-/dev/null}:/home/guest/.Xilinx/Xilinx.lic:ro
+      - ./c/lib:/opt/flock_shim:ro
+      - ./dise/migrate.sh:/usr/local/bin/migrate.sh:ro
+    depends_on: *depends-linux
+    command: *cmd-ise

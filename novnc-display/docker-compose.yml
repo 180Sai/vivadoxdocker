@@ -1,0 +1,13 @@
+services:
+  web-display:
+    build:
+      context: .
+      dockerfile: Dockerfile.novnc
+    image: web-display:latest
+    ports:
+      - "6080:6080"
+    volumes:
+      - x11-socket:/tmp/.X11-unix
+
+volumes:
+  x11-socket:
