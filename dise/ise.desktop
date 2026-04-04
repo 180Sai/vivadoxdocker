@@ -1,9 +1,0 @@
-[Desktop Entry]
-Version=1.0
-Name=ISE WebPACK
-Comment=Xilinx ISE Design Suite 14.7
-Exec=docker exec dise-web bash -c "bash /usr/local/bin/launch-ise.sh"
-Icon=system-run
-Terminal=true
-Type=Application
-Categories=Development;Electronics;

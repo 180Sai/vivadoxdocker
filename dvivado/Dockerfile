@@ -34,10 +34,11 @@ RUN apt-get update && apt-get install -y \
     net-tools \
     rsync \
     sudo \
-    xterm \
+    xterm-256color \
     libpng12-0 \
     libjpeg8 \
     libxaw7 \
+    fpart \
     && locale-gen en_US.UTF-8 \
     && ln -sf /bin/bash /bin/sh \
     && rm -rf /var/lib/apt/lists/*
@@ -46,8 +47,6 @@ ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
-# Run installer silently using bind-mounted installer directory and config-context
-# Note: from=installer_dir and from=config_dir use additional contexts defined in docker-compose.yml
 FROM base AS builder
 ARG VIVADO_VERSION=2016.3
 
@@ -72,13 +71,10 @@ RUN rm -rf /opt/Xilinx/Vivado/${VIVADO_VERSION}/gnu \
 FROM base AS runtime
 ARG VIVADO_VERSION=2016.2
 
-# Copy only essential files to final stage
 COPY --from=builder /opt/Xilinx /opt/Xilinx
 
-# Source Vivado settings for every shell session
 RUN echo "vivado() { (source /opt/Xilinx/Vivado/${VIVADO_VERSION}/settings64.sh && vivado \"\$@\"); }" >> /etc/bash.bashrc
 
-# Create guest user
 RUN useradd -m -s /bin/bash guest && \
     echo "guest ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
     mkdir -p /home/guest/workspace-vivado && \
@@ -87,7 +83,5 @@ RUN useradd -m -s /bin/bash guest && \
 
 USER guest
 WORKDIR /home/guest
-
-EXPOSE 6080 5900
 
 CMD ["/bin/bash"]
