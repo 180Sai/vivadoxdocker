@@ -37,7 +37,7 @@ RUN dpkg --add-architecture i386 && apt-get update && apt-get install -y \
     libpng12-0 \
     libjpeg8 \
     libxaw7 \
-    fpart \
+    sudo \
     && locale-gen en_US.UTF-8 \
     && ln -sf /bin/bash /bin/sh \
     && rm -rf /var/lib/apt/lists/*

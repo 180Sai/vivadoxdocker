@@ -49,7 +49,7 @@ RUN dpkg --add-architecture i386 && apt-get update && apt-get install -y \
     libc6-dev-i386 \
     rsync \
     xterm \
-    fpart \
+    sudo \
     && locale-gen en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/* \
     && ln -sf bash /bin/sh
