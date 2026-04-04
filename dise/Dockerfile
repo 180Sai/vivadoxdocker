@@ -7,6 +7,8 @@ RUN dpkg --add-architecture i386 && apt-get update && apt-get install -y \
     libncurses5:i386 \
     libstdc++5 \
     libstdc++5:i386 \
+    libstdc++6 \
+    libstdc++6:i386 \
     lib32stdc++6 \
     lib32z1 \
     libcanberra-gtk-module \
@@ -29,6 +31,15 @@ RUN dpkg --add-architecture i386 && apt-get update && apt-get install -y \
     libfontconfig1 \
     libfontconfig1:i386 \
     libxext6 \
+    libxext6:i386 \
+    libpng12-0 \
+    libpng12-0:i386 \
+    libgtk2.0-0:i386 \
+    gtk2-engines-pixbuf \
+    gtk2-engines-pixbuf:i386 \
+    libcanberra-gtk-module:i386 \
+    humanity-icon-theme \
+    ubuntu-mono \
     libc6-i386 \
     lib32gcc1 \
     libmotif-dev \
@@ -37,8 +48,11 @@ RUN dpkg --add-architecture i386 && apt-get update && apt-get install -y \
     libc6-dev \
     libc6-dev-i386 \
     sudo \
+    rsync \
+    xterm \
     && locale-gen en_US.UTF-8 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf bash /bin/sh
 
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
@@ -78,9 +92,15 @@ COPY --from=builder /opt/Xilinx /opt/Xilinx
 # Create bash function to wrap ISE start commands
 RUN echo "ise() { (source /opt/Xilinx/${ISE_VERSION}/ISE_DS/settings64.sh && ise \"\$@\"); }" >> /etc/bash.bashrc
 
+# Set default license path (can be overridden at runtime via docker-compose environment or -e flag)
+ENV XILINXD_LICENSE_FILE=/home/guest/Xilinx.lic
+
 # Create guest user
 RUN useradd -m -s /bin/bash guest && \
-    echo "guest ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+    echo "guest ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
+    mkdir -p /home/guest/workspace-ise && \
+    mkdir -p /home/guest/.Xilinx && \
+    chown -R guest:guest /home/guest
 
 USER guest
 WORKDIR /home/guest

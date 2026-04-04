@@ -7,11 +7,15 @@ RUN apt-get update && apt-get install -y \
     libncursesw5 \
     libtinfo5 \
     libcanberra-gtk-module \
+    libstdc++6 \
+    libstdc++6:i386 \
     libxtst6 \
     libxi6 \
     libxrender1 \
     libxft2 \
     libglib2.0-0 \
+    gtk2-engines-pixbuf \
+    adwaita-icon-theme \
     libsm6 \
     libice6 \
     libc6-i386 \
@@ -30,6 +34,10 @@ RUN apt-get update && apt-get install -y \
     net-tools \
     rsync \
     sudo \
+    xterm \
+    libpng12-0 \
+    libjpeg8 \
+    libxaw7 \
     && locale-gen en_US.UTF-8 \
     && ln -sf /bin/bash /bin/sh \
     && rm -rf /var/lib/apt/lists/*
@@ -41,7 +49,7 @@ ENV LC_ALL=en_US.UTF-8
 # Run installer silently using bind-mounted installer directory and config-context
 # Note: from=installer_dir and from=config_dir use additional contexts defined in docker-compose.yml
 FROM base AS builder
-ARG VIVADO_VERSION=2016.2
+ARG VIVADO_VERSION=2016.3
 
 RUN apt-get update && apt-get install -y unzip xz-utils \
     && rm -rf /var/lib/apt/lists/*
@@ -72,7 +80,10 @@ RUN echo "vivado() { (source /opt/Xilinx/Vivado/${VIVADO_VERSION}/settings64.sh 
 
 # Create guest user
 RUN useradd -m -s /bin/bash guest && \
-    echo "guest ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+    echo "guest ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
+    mkdir -p /home/guest/workspace-vivado && \
+    mkdir -p /home/guest/.vivado && \
+    chown -R guest:guest /home/guest
 
 USER guest
 WORKDIR /home/guest
