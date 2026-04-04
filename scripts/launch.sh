@@ -4,19 +4,32 @@
 
 set -e
 
+# SESSION CLEANUP & SYNC ───────────────────────────────────────────────────────
+cleanup() {
+    local exit_code=$?
+    # Run the restore sync regardless of success/failure
+    /bin/bash /usr/local/bin/migrate.sh "${_WORKSPACE}" "${_CONTAINER_WS}" --restore
+    
+    if [ $exit_code -ne 0 ]; then
+        echo "[ERROR] Tool session failed ($exit_code)."
+    fi
+
+    # Holds for 10s or until key press
+    # This acts as a manual replacement for the broken xterm -hold
+    if [ -t 1 ]; then
+        echo -e "\n[launch] Session ended. Holding for 10s or press any key."
+        read -t 10 -n 1 -s -r || true
+    fi
+}
+trap cleanup EXIT TERM
+
 APP_ID="${APP_ID:-vivado}"
 APP_LABEL="${APP_LABEL:-Vivado}"
-WORKSPACE="/mnt/host-workspace-${APP_ID}"
-CONTAINER_WS="/home/guest/workspace-${APP_ID}"
+_WORKSPACE="/mnt/host-workspace-${APP_ID}"
+_CONTAINER_WS="/home/guest/workspace-${APP_ID}"
 
-# SESSION SYNC ────────────────────────────────────────────────────────────────
-
-# Migrate workspace into container
-# echo "[launch] Migrating workspace..."
-/usr/local/bin/migrate.sh "$WORKSPACE" "$CONTAINER_WS" --migrate
-
-# Set restore on exit
-trap 'bash /usr/local/bin/migrate.sh "$WORKSPACE" "$CONTAINER_WS" --restore' EXIT
+# Migrate workspace into container before tool launch
+/bin/bash /usr/local/bin/migrate.sh "${_WORKSPACE}" "${_CONTAINER_WS}" --migrate
 # echo "[launch] Workspace restored. Closing."
 
 # TOOL LAUNCH ─────────────────────────────────────────────────────────────────
