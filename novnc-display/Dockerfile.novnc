@@ -2,14 +2,30 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb \
     x11vnc \
     novnc \
     websockify \
-    #xfce4 \
-    #xfce4-terminal \
+    xfce4 \
+    xfce4-terminal \
+    dbus-x11 \
+    x11-xserver-utils \
+    libgl1-mesa-dri \
+    libgl1-mesa-glx \
+    humanity-icon-theme \
+    ubuntu-mono \
+    curl \
+    sudo \
     && rm -rf /var/lib/apt/lists/*
+
+# Create guest user to match tool containers
+RUN useradd -m -s /bin/bash -u 1000 guest && \
+    echo "guest ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Install Docker CLI (static binary) for docker exec into tool containers
+RUN curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-27.5.1.tgz | \
+    tar -xz --strip-components=1 -C /usr/local/bin docker/docker
 
 COPY novnc-entrypoint.sh /novnc-entrypoint.sh
 RUN chmod +x /novnc-entrypoint.sh
