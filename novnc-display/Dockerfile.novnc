@@ -7,28 +7,42 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     x11vnc \
     novnc \
     websockify \
-    xfce4 \
+    xfce4-session \
+    xfwm4 \
+    xfce4-panel \
+    xfdesktop4 \
+    thunar \
+    xfce4-settings \
     xfce4-terminal \
     dbus-x11 \
     x11-xserver-utils \
     libgl1-mesa-dri \
     libgl1-mesa-glx \
+    libcanberra-gtk-module \
     humanity-icon-theme \
     ubuntu-mono \
+    fonts-liberation \
     curl \
-    sudo \
+    runit \
+    x11-apps \
     && rm -rf /var/lib/apt/lists/*
 
-# Create guest user to match tool containers
-RUN useradd -m -s /bin/bash -u 1000 guest && \
-    echo "guest ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+RUN useradd -m -s /bin/bash -u 1000 guest
 
-# Install Docker CLI (static binary) for docker exec into tool containers
+# Docker CLI runs apps in other containers
 RUN curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-27.5.1.tgz | \
     tar -xz --strip-components=1 -C /usr/local/bin docker/docker
 
 COPY novnc-entrypoint.sh /novnc-entrypoint.sh
-RUN chmod +x /novnc-entrypoint.sh
+COPY services /etc/service
+RUN chmod +x /novnc-entrypoint.sh && \
+    chmod +x /etc/service/*/run
+
+# Copy desktop launchers and make them executable so Xfce recognizes them
+COPY vivado.desktop "/home/guest/Desktop/Vivado_WebPACK.desktop"
+COPY ise.desktop "/home/guest/Desktop/ISE_WebPACK.desktop"
+RUN chmod +x "/home/guest/Desktop/Vivado_WebPACK.desktop" "/home/guest/Desktop/ISE_WebPACK.desktop" \
+    && chown -R guest:guest /home/guest/Desktop
 
 EXPOSE 6080
 

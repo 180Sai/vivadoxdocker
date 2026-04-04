@@ -1,0 +1,7 @@
+#!/bin/sh
+export DISPLAY=:0
+export XDG_RUNTIME_DIR=/tmp/runtime-guest
+# Wait for Xvfb
+while ! xset -display :0 q > /dev/null 2>&1; do sleep 0.1; done
+# Run as guest
+exec chpst -u guest xfsettingsd --no-daemon --replace
