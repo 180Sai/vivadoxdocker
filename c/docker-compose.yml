@@ -1,8 +1,0 @@
-services:
-  shim-builder:
-    build:
-      context: .
-      dockerfile: Dockerfile.builder
-    volumes:
-      - .:/build
-    container_name: flock-shim-builder
