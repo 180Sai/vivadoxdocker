@@ -1,7 +1,7 @@
 FROM ubuntu:16.04 AS base
 
 # Dependencies - restored xz-utils to fix payload extraction
-RUN apt-get update && apt-get install -y \
+RUN dpkg --add-architecture i386 && apt-get update && apt-get install -y \
     locales \
     libncurses5 \
     libncursesw5 \
@@ -33,8 +33,7 @@ RUN apt-get update && apt-get install -y \
     libc6-dev \
     net-tools \
     rsync \
-    sudo \
-    xterm-256color \
+    xterm \
     libpng12-0 \
     libjpeg8 \
     libxaw7 \
@@ -76,7 +75,6 @@ COPY --from=builder /opt/Xilinx /opt/Xilinx
 RUN echo "vivado() { (source /opt/Xilinx/Vivado/${VIVADO_VERSION}/settings64.sh && vivado \"\$@\"); }" >> /etc/bash.bashrc
 
 RUN useradd -m -s /bin/bash guest && \
-    echo "guest ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
     mkdir -p /home/guest/workspace-vivado && \
     mkdir -p /home/guest/.vivado && \
     chown -R guest:guest /home/guest

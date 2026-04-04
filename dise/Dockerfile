@@ -47,7 +47,6 @@ RUN dpkg --add-architecture i386 && apt-get update && apt-get install -y \
     g++ \
     libc6-dev \
     libc6-dev-i386 \
-    sudo \
     rsync \
     xterm \
     fpart \
@@ -90,7 +89,6 @@ RUN echo "ise() { (source /opt/Xilinx/${ISE_VERSION}/ISE_DS/settings64.sh && ise
 ENV XILINXD_LICENSE_FILE=/home/guest/.Xilinx/Xilinx.lic
 
 RUN useradd -m -s /bin/bash guest && \
-    echo "guest ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
     mkdir -p /home/guest/workspace-ise && \
     mkdir -p /home/guest/.Xilinx && \
     chown -R guest:guest /home/guest
