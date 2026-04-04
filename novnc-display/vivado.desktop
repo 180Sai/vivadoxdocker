@@ -1,9 +1,0 @@
-[Desktop Entry]
-Version=1.0
-Name=Vivado WebPACK
-Comment=Xilinx Vivado Design Suite 2016.3
-Exec=docker exec dvivado-web bash -c "bash /usr/local/bin/launch-vivado.sh"
-Icon=system-run
-Terminal=true
-Type=Application
-Categories=Development;Electronics;

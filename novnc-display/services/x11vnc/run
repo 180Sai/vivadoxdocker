@@ -1,2 +1,0 @@
-#!/bin/sh
-exec x11vnc -display :0 -nopw -forever -xkb -q

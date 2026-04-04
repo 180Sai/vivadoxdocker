@@ -52,18 +52,10 @@ x-ise-runtime: &ise-runtime
 
 # ─── Commands ─────────────────────────────────────────────────────────
 
-# Desktop setup + wait for web services
-x-cmd-idle: &cmd-idle >
-  /bin/bash -c "while [ ! -w /tmp/shared-desktop ]; do sleep 1; done;
-  trap 'rm -f /tmp/shared-desktop/$$APP_LABEL.desktop' EXIT &&
-  cp /tmp/$$APP_ID.desktop /tmp/shared-desktop/$$APP_LABEL.desktop &&
-  chmod +x /tmp/shared-desktop/$$APP_LABEL.desktop &&
-  echo \"[webapp] $$APP_LABEL active on http://localhost:6080.\" && tail -f /dev/null"
-
 # Session log attachment
 x-cmd-session: &cmd-session >
-  xterm -T \"$$APP_LABEL Session Log\" -bg black -fg white -fa 'Monospace' -fs 10 -geometry 120x30 -e
-  /usr/local/bin/launch.sh
+  xterm -T "$$APP_LABEL Session Log" -bg black -fg white -fa 'Monospace' -fs 10 -geometry 120x30 -e
+  bash /usr/local/bin/launch.sh
 
 # ─── Services ────────────────────────────────────────────────────────────────
 
@@ -76,11 +68,11 @@ services:
     build: *vivado-build
     environment:
       <<: *vivado-env
-      APP_LABEL: Vivado
+      APP_LABEL: Vivado_WebPACK
       APP_ID: vivado
     volumes:
       - ${XAUTHORITY:-${HOME}/.Xauthority}:/home/guest/.Xauthority
-      - workspace-local:/home/guest/workspace-vivado
+      - workspace-vivado:/home/guest/workspace-vivado
       - ${WORKSPACE}:/mnt/host-workspace-vivado
       - ./scripts/migrate.sh:/usr/local/bin/migrate.sh:ro
       - ./scripts/launch.sh:/usr/local/bin/launch.sh:ro
@@ -90,55 +82,17 @@ services:
     build: *ise-build
     environment:
       <<: *ise-env
-      APP_LABEL: ISE
+      APP_LABEL: ISE_WebPACK
       APP_ID: ise
     volumes:
       - ${XAUTHORITY:-${HOME}/.Xauthority}:/home/guest/.Xauthority
-      - workspace-local:/home/guest/workspace-ise
+      - workspace-ise:/home/guest/workspace-ise
       - ${WORKSPACE}:/mnt/host-workspace-ise
       - ./scripts/migrate.sh:/usr/local/bin/migrate.sh:ro
       - ./scripts/launch.sh:/usr/local/bin/launch.sh:ro
       - ${ISE_LICENSE_FILE}:/home/guest/.Xilinx/Xilinx.lic:ro
 
-# ─── Runtime Services ─────────────────────────────────────────────────────────
-
-  web-display:
-    container_name: novnc-display
-    build:
-      context: ./novnc-display
-      dockerfile: Dockerfile.novnc
-    image: web-display:latest
-    ports:
-      - "6080:6080"
-    shm_size: '512mb'
-    ipc: shareable
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - shared-desktop:/tmp/shared-desktop
-      - x11-socket:/tmp/.X11-unix
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6080"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
-  vivado-web:
-    extends: vivado-base
-    container_name: dvivado-web
-    pid: "service:web-display"
-    ipc: "service:web-display"
-    shm_size: '512mb'
-    environment:
-      DISPLAY: ":0"
-    volumes:
-      - x11-socket:/tmp/.X11-unix
-      - ./dvivado/vivado.desktop:/tmp/vivado.desktop:ro
-      - shared-desktop:/tmp/shared-desktop
-    depends_on:
-      - web-display
-    command: *cmd-idle
-
-  vivado-linux:
+  vivado:
     extends: vivado-base
     container_name: dvivado-linux
     volumes:
@@ -147,23 +101,7 @@ services:
     tty: true
     command: *cmd-session
 
-  ise-web:
-    extends: ise-base
-    container_name: dise-web
-    pid: "service:web-display"
-    ipc: "service:web-display"
-    shm_size: '512mb'
-    environment:
-      DISPLAY: ":0"
-    volumes:
-      - x11-socket:/tmp/.X11-unix
-      - ./dise/ise.desktop:/tmp/ise.desktop:ro
-      - shared-desktop:/tmp/shared-desktop
-    depends_on:
-      - web-display
-    command: *cmd-idle
-
-  ise-linux:
+  ise:
     extends: ise-base
     container_name: dise-linux
     volumes:
@@ -173,6 +111,5 @@ services:
     command: *cmd-session
 
 volumes:
-  workspace-local: {}
-  x11-socket: {}
-  shared-desktop: {}
+  workspace-vivado: {}
+  workspace-ise: {}
