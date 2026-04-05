@@ -44,11 +44,7 @@ x-ise-build: &ise-build
     - installer_dir=${ISE_INSTALLER_DIR}
     - config_dir=${ISE_CONFIG_DIR}
 
-x-vivado-runtime: &vivado-runtime
-  image: vivado:${VIVADO_VERSION}
 
-x-ise-runtime: &ise-runtime
-  image: ise:${ISE_VERSION}
 
 # ─── Commands ─────────────────────────────────────────────────────────
 
@@ -64,7 +60,7 @@ services:
 # ─── Tool Bases ─────────────────────────────────────────────────────────────
 
   vivado-base:
-    image: vivado:${VIVADO_VERSION}
+    image: 180sai/vivadoxdocker:vivado-${VIVADO_VERSION}
     build: *vivado-build
     environment:
       <<: *vivado-env
@@ -78,7 +74,7 @@ services:
       - ./scripts/launch.sh:/usr/local/bin/launch.sh:ro
 
   ise-base:
-    image: ise:${ISE_VERSION}
+    image: 180sai/vivadoxdocker:ise-${ISE_VERSION}
     build: *ise-build
     environment:
       <<: *ise-env
