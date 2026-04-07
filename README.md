@@ -1,5 +1,11 @@
 A Docker Compose module for running legacy Xilinx Vivado and Xilinx ISE installations on any machine, bypassing the need for a virtual machine setup. Where arbitrary constraints enforce the need to learn or use antiquated, unsupported versions of these IDEs, virtualization solves this by recreating the environment to run the app. Docker Compose automates the virtualization setup so users can focus more on the task at hand rather than shaping the tools they need.
 
+## Tested Versions
+
+- Vivado 2016.2
+- Vivado 2016.3
+- ISE 14.7
+
 ## Prerequisites
 
 - **Docker** with [BuildKit](https://docs.docker.com/build/buildkit/) and [Docker Compose](https://docs.docker.com/compose/) OR **Docker Desktop**
