@@ -1,5 +1,4 @@
-
-A Docker Compose module for running legacy Xilinx Vivado and Xilinx ISE installations on any machine, bypassing the need for a virtual machine setup.
+A Docker Compose module for running legacy Xilinx Vivado and Xilinx ISE installations on any machine, bypassing the need for a virtual machine setup. Where arbitrary constraints enforce the need to learn or use antiquated, unsupported versions of these IDEs, virtualization solves this by recreating the environment to run the app. Docker Compose automates the virtualization setup so users can focus more on the task at hand rather than shaping the tools they need.
 
 ## Prerequisites
 
@@ -26,6 +25,13 @@ To start the application, run within the repository directory:
 ```bash
 docker compose up ise
 docker compose up vivado
+```
+
+For Windows users, Docker must be started within WSL to properly connect to the display. Run these commands to start the application:
+
+```bash
+wsl docker compose up ise
+wsl docker compose up vivado
 ```
 
 Images for Vivado 2016.3 and ISE 14.7 are retrieved from [this repository](https://hub.docker.com/repository/docker/180sai/vivadoxdocker/) on Docker Hub.
